@@ -18,13 +18,13 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JButton;
 import javax.swing.JDialog;
-//save function
+
 public class Apple extends JFrame {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	static int resolution;//!
+	static int resolution;
 	static int windowMarginLRB =5; //window margin left, right, bottom
 	static int windowMarginT=31; //window margin top
 	static int itermax =2000; //maximum iterations
@@ -43,23 +43,23 @@ public class Apple extends JFrame {
 	double [] imagePos; //position of Image 
 	double imageHeight=imageWidth*3.f/4.f; //height of Image
 	AImage AppleImage; //Panel which shows the image
-	Stack<Integer> zoomsaverx; //saves all zoom-in operations
-	Stack<Integer> zoomsavery;
+	Stack<Double> zoomsaverx; //saves all zoom-in operations
+	Stack<Double> zoomsavery;
 	JLabel status;//information panel content
 	JLabel help1;
 	JLabel help2;
 	JTextField name;
 	JButton save;
-	
+
 	BufferedImage image;
 	JDialog MyJDialog;
-	
+
 	public Apple(String title) {
 		imagePos=new double [2];
 		imagePos[0]=-0.743643135-(2*imageWidth/2); //initalizes the start position
 		imagePos[1]=0.131825963-(2*imageWidth*3.f/8.f);
-		zoomsaverx=new Stack<Integer>();
-		zoomsavery=new Stack<Integer>();
+		zoomsaverx=new Stack<Double>();
+		zoomsavery=new Stack<Double>();
 		Dimension screensize=Toolkit.getDefaultToolkit().getScreenSize();
 		resolution=(int) (screensize.getHeight()-150-windowMarginT);  //resolution is optimized for user
 		MyJDialog=new JDialog();
@@ -99,7 +99,7 @@ public class Apple extends JFrame {
 			public void mouseClicked(MouseEvent e){//operation dependet on mouse button
 				if(e.getButton()==1){
 					zoomin(e);
-					
+
 				}else if(e.getButton()==3){
 					zoomout(e);
 				}
@@ -122,89 +122,42 @@ public class Apple extends JFrame {
 		}
 	}
 	public void zoomout(MouseEvent e){//reverts last zoomin if given; saves position and doubles width and height if not
-		int dirx,diry;
+
 		if(e.getY()<110+windowMarginT){
 			return;
 		}
-		if(!zoomsaverx.empty()){
-		 dirx=zoomsaverx.pop();
-		 diry=zoomsavery.pop();
+		if(zoomsaverx.empty()){
+
 		}else{
-			dirx=-1;
-			diry=-1;
-		}
-		if(dirx==1&&diry==1){
-			imagePos[0]=imagePos[0]-(imageWidth);
-			imagePos[1]=imagePos[1];
-		}
-		if(dirx==1&&diry==0){
-			imagePos[0]=imagePos[0]-(imageWidth);
-			imagePos[1]=imagePos[1]-(imageHeight/2.f)*(4.f/3.f);
-		}
-		if((dirx==0&&diry==1)||(dirx==-1&&diry==-1)){
-			imagePos[0]=imagePos[0];
-			imagePos[1]=imagePos[1];
-		}
-		if(dirx==0&&diry==0){
-			imagePos[0]=imagePos[0];
-			imagePos[1]=imagePos[1]-(imageHeight/2.f)*(4.f/3.f);
+			imagePos[0]=zoomsaverx.pop();
+			imagePos[1]=zoomsavery.pop();
 		}
 		imageWidth=imageWidth*2;
 		status.setText("Calculating...");
 		MyJDialog.update(MyJDialog.getGraphics());
 		Graphics gimg =image.createGraphics();
 		calcImage(gimg);
-		status.setText("Ready            ");
+		status.setText("Ready             ");
 		MyJDialog.update(MyJDialog.getGraphics());
 	}
 	public void zoomin(MouseEvent e){//reads in which quadrant the click was; shows it 
-		int px=0;
-		int py=0;
+
 		if(e.getY()<110+windowMarginT){
 			return;
 		}
-		if(e.getX()>=(double)(resolution+2*windowMarginLRB)/(double)2){
-			px=1;
-			
-		}
-		if((e.getY()<=((double)(resolution+windowMarginLRB+windowMarginT)/(double)2)+110)&&e.getY()>110){
-			py=1;
-			
-		}
-		
-	
-		if(px==0&&py==0){
-			imagePos[0]=imagePos[0];
-			imagePos[1]=imagePos[1]+(imageHeight/(double)2)*(4.f/3.f);
-			zoomsaverx.push(new Integer(0));
-			zoomsavery.push(new Integer(0));
-		}
-		if(px==1&&py==0){
-			imagePos[0]=imagePos[0]+(imageWidth/(double)2);
-			imagePos[1]=imagePos[1]+(imageHeight/(double)2)*(4.f/3.f);
-			zoomsaverx.push(new Integer(1));
-			zoomsavery.push(new Integer(0));
-		}
-		if(px==1&&py==1){
-			imagePos[0]=imagePos[0]+(imageWidth/(double)2);
-			imagePos[1]=imagePos[1];
-			zoomsaverx.push(new Integer(1));
-			zoomsavery.push(new Integer(1));
-			
-		}
-		if(px==0&&py==1){
-			imagePos[0]=imagePos[0];
-			imagePos[1]=imagePos[1];
-			zoomsaverx.push(new Integer(0));
-			zoomsavery.push(new Integer(1));
-		}
-			imageWidth=imageWidth/(double)2;
-			status.setText("Calculating...");
-			MyJDialog.update(MyJDialog.getGraphics());
-			Graphics gimg =image.createGraphics();
-			calcImage(gimg);
-			status.setText("Ready                ");
-			MyJDialog.update(MyJDialog.getGraphics());
+		zoomsaverx.push(imagePos[0]);
+		zoomsavery.push(imagePos[1]);
+
+		imagePos[0]=imagePos[0]+(((double)e.getX()-2*(double)windowMarginLRB)/(double)resolution)*imageWidth-imageWidth/(double)4;
+		imagePos[1]=imagePos[1]+(((double)e.getY()-(double)(110+windowMarginT))/(double)resolution)*(imageWidth*4.f/3.f)-(imageWidth*3.f/8.f);
+
+		imageWidth=imageWidth/(double)2;
+		status.setText("Calculating...");
+		MyJDialog.update(MyJDialog.getGraphics());
+		Graphics gimg =image.createGraphics();
+		calcImage(gimg);
+		status.setText("Ready                 ");
+		MyJDialog.update(MyJDialog.getGraphics());
 	}
 	class AImage extends JPanel{
 		/**
@@ -215,11 +168,13 @@ public class Apple extends JFrame {
 		protected void paintComponent(Graphics g){
 			super.paintComponent(g);
 			g.drawImage(image, windowMarginLRB, windowMarginT, this);
+
+
 		};
 
 	}
-	
-	
+
+
 	public Color calcColor(int iter){//gets the color by the given amount of iterations, uses weighted average for a smooth look
 		int co[]=new int[3];
 		for(int i=1; i<colors.length-1;i++){
@@ -229,14 +184,14 @@ public class Apple extends JFrame {
 				for(int f=0; f<3;f++){
 					int colorInterval=colors[i-1][f+1]-colors[i][f+1];
 					co[f]=(int)(weightedAverage*colorInterval)+colors[i][f+1];
-					
+
 				}	
 				return new Color(co[0],co[1],co[2]);
+			}
+
 		}
-		
-	}
 		return Color.BLACK;	
-}
+	}
 	public int calcPoint(ComplexNumber c){//calculates the needed iterations until divergence
 		ComplexNumber z=new ComplexNumber(0,0);
 		int iter=0;
@@ -256,7 +211,7 @@ public class Apple extends JFrame {
 
 	public static void main(String[]args){
 		Apple a=new Apple ("Mandelbrot-Viewer" );
-		
+
 	}
 }
 
